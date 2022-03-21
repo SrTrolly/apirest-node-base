@@ -1,6 +1,8 @@
 const bcryptjs = require("bcryptjs");
 const{response,request}=require("express");
-const { validationResult } = require("express-validator");
+const { emailExiste } = require("../helpers/db-validators");
+const { validarCampos } = require("../middlewares/validar-campos");
+
 const Usuario=require("../models/usuario");
 
 
@@ -25,23 +27,17 @@ const usuarioPut=(req=request,res=response)=>{
 };
 
 const usuarioPost=async(req=request,res=response)=>{
-
-    const errors=validationResult(req);
-    if(!errors.isEmpty()){
-        return res.status(400).json(errors);
-    }
-
-    
     const {nombre,correo,password,rol}=req.body;
     const usuario= new Usuario({nombre,correo,password,rol});
 
     //Verificar si el correo existe
-    const existeEmail=await Usuario.findOne({correo:correo});
-    if(existeEmail){
-        return res.status(400).json({
-            msg:"El correo ya esta registrado"
-        });
-    }
+    
+    // const existeEmail=await Usuario.findOne({correo:correo});
+    // if(existeEmail){
+    //     return res.status(400).json({
+    //         msg:"El correo ya esta registrado"
+    //     });
+    // }
 
     //Encriptar la contraseña
     const salt=bcryptjs.genSaltSync(10);
@@ -51,7 +47,6 @@ const usuarioPost=async(req=request,res=response)=>{
 
     
     res.json({
-        msg:"post API-controlador",
         usuario:usuario
     });
 };
