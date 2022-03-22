@@ -16,7 +16,7 @@ const usuarioSchema=Schema({
     img:{
         type:String
     },
-    role:{
+    rol:{
         type:String,
         require:true,
         enum:["ADMIN_ROLE","USER_ROLE"]

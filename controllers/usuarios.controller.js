@@ -2,42 +2,52 @@ const bcryptjs = require("bcryptjs");
 const{response,request}=require("express");
 const { emailExiste } = require("../helpers/db-validators");
 const { validarCampos } = require("../middlewares/validar-campos");
+const usuario = require("../models/usuario");
 
 const Usuario=require("../models/usuario");
 
 
 
 
-const usuarioGet=(req=request,res=response)=>{
+const usuarioGet=async(req=request,res=response)=>{
 
-    const params=req.query;
+    // const params=req.query;
+    const {limite=5,desde=0}=req.query;
+    const query={estado:true};
+    // const usuarios= await Usuario.find(query).skip(desde).limit(limite)
+    // const total= await Usuario.countDocuments(query);
+
+    const [total,usuarios]= await Promise.all([
+        Usuario.count(query),
+        Usuario.find(query).skip(desde).limit(limite)
+    ]);
     res.json({
-        msg:"get PAI-controlador"
+       total:total,
+       usuarios:usuarios
     });
 };
 
-const usuarioPut=(req=request,res=response)=>{
+const usuarioPut= async(req=request,res=response)=>{
 
     const id =req.params.id;
+    const {_id,password,google,correo, ...resto}=req.body;
+
+    //TODO validar contra base de datos 
+    if(password){
+        const salt=bcryptjs.genSaltSync(10);
+        resto.password=bcryptjs.hashSync(password,salt);
+    }
+
+    const usuario= await Usuario.findByIdAndUpdate(id,resto);
 
     res.json({
-        msg:"put API-controlador",
-        id:id
+        usuario:usuario
     });
 };
 
 const usuarioPost=async(req=request,res=response)=>{
     const {nombre,correo,password,rol}=req.body;
     const usuario= new Usuario({nombre,correo,password,rol});
-
-    //Verificar si el correo existe
-    
-    // const existeEmail=await Usuario.findOne({correo:correo});
-    // if(existeEmail){
-    //     return res.status(400).json({
-    //         msg:"El correo ya esta registrado"
-    //     });
-    // }
 
     //Encriptar la contraseña
     const salt=bcryptjs.genSaltSync(10);
@@ -51,9 +61,15 @@ const usuarioPost=async(req=request,res=response)=>{
     });
 };
 
-const usuarioDelete=(req=request,res=response)=>{
+const usuarioDelete=async(req=request,res=response)=>{
+
+    const {id}=req.params;
+
+    // Fisicamente borramos la base de datos 
+    // const usuario=await Usuario.findByIdAndDelete(id); no es bueno eliminar el usuario, ya que se pierde todas sus modificaciones 
+    const usuario= await Usuario.findByIdAndUpdate(id,{estado:false});
     res.json({
-        msg:"delete API-controlador"
+        usuario:usuario
     });
 };
 
