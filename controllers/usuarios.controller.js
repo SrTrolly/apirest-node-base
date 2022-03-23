@@ -1,8 +1,6 @@
 const bcryptjs = require("bcryptjs");
 const{response,request}=require("express");
-const { emailExiste } = require("../helpers/db-validators");
-const { validarCampos } = require("../middlewares/validar-campos");
-const usuario = require("../models/usuario");
+
 
 const Usuario=require("../models/usuario");
 
