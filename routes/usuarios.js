@@ -1,41 +1,54 @@
-const {Router}= require("express");
+const { Router } = require("express");
 const { check } = require("express-validator");
-const { validarJWT } = require("../middlewares/validar-jwt");
-const { usuarioGet, usuarioPut, usuarioPost, usuarioDelete, usuarioPatch } = require("../controllers/usuarios.controller");
-const { esRoleValido, emailExiste, existeUsuarioPorId } = require("../helpers/db-validators");
-const { validarCampos } = require("../middlewares/validar-campos");
+const { esRoleValido,
+    emailExiste,
+    existeUsuarioPorId
+} = require("../helpers/db-validators");
 
+const { usuarioGet,
+    usuarioPut,
+    usuarioPost,
+    usuarioDelete,
+    usuarioPatch
+} = require("../controllers/usuarios.controller");
 
-const router=Router();
+const { validarCampos,
+    validarJWT,
+    tieneRole
+} = require("../middlewares")
 
-router.get("/",usuarioGet);
+const router = Router();
 
-router.put("/:id",[
-    check("id","No es un ID valido").isMongoId(),
+router.get("/", usuarioGet);
+
+router.put("/:id", [
+    check("id", "No es un ID valido").isMongoId(),
     check("id").custom(existeUsuarioPorId),
     check("rol").custom(esRoleValido),
     validarCampos
-],usuarioPut);
-   
-router.post("/",[
-    check("nombre","El nombre es obligatorio").not().isEmpty(),
-    check("password", "El password debe de ser mas de 6 letras").isLength({min:6}),
+], usuarioPut);
+
+router.post("/", [
+    check("nombre", "El nombre es obligatorio").not().isEmpty(),
+    check("password", "El password debe de ser mas de 6 letras").isLength({ min: 6 }),
     check("correo").custom(emailExiste),
     // check("rol","No es un rol valido").isIn(["ADMIN_ROLE","USER_ROLE"]),
     check("rol").custom(esRoleValido),
     validarCampos
-],usuarioPost);
+], usuarioPost);
 
-router.delete("/:id",[
+router.delete("/:id", [
     validarJWT,
+    // esAdminRole,
+    tieneRole("ADMIN_ROLE", "USER_ROLE"),
     check("id", "No es un ID valido").isMongoId(),
     check("id").custom(existeUsuarioPorId),
     validarCampos
-],usuarioDelete);
+], usuarioDelete);
 
-router.patch("/",usuarioPatch);
+router.patch("/", usuarioPatch);
 
-module.exports=router;
+module.exports = router;
 
 
 
