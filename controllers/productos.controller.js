@@ -1,4 +1,5 @@
 const { request, response } = require("express");
+const { body } = require("express-validator");
 const{Producto}=require("../models");
 
 
@@ -25,18 +26,20 @@ const obtenerProductos=async(req=request, res=response)=>{
 
 const obtenerProducto=async(req=request, res=response)=>{
     const id=req.params.id;
-    const producto= await Producto.findById(id).populate("usuario","nombre");
+    const producto= await Producto.findById(id)
+    .populate("usuario","nombre")
+    .populate("categoria","nombre");
 
     res.json({
         producto:producto
     });
 }
 
-const crearProducto= async(req=request, res=response)=>{
-    const {precio,descripcion,categoria}=req.body;
-    const nombre = req.body.nombre.toUpperCase();
 
-    const productoDB= await Producto.findOne({nombre}).populate("usuario","nombre");
+const crearProducto= async(req=request, res=response)=>{
+    const {estado,usuario,...body}=req.body;
+    const nombre=req.body.nombre.toUpperCase();
+    const productoDB= await Producto.findOne({nombre});
 
     if(productoDB){
         return res.status(400).json({
@@ -46,11 +49,9 @@ const crearProducto= async(req=request, res=response)=>{
     }
 
     const data={
+        ...body,
         nombre:nombre,
-        precio:precio,
-        descripcion:descripcion,
-        usuario:req.usuario._id,
-        categoria:categoria
+        usuario:req.usuario._id
     }
 
     const producto= new Producto(data);
@@ -65,11 +66,12 @@ const crearProducto= async(req=request, res=response)=>{
 
 const actualizarProducto= async(req=request, res=response)=>{
     const id=req.params.id;
-    const {estado,categoria,usuario,...data}=req.body;
-    const nombre=req.body.nombre.toUpperCase();
-    
+    const {estado,usuario,...data}=req.body;
+    if(data.nombre){
+        const nombre=req.body.nombre.toUpperCase();
+        data.nombre=nombre;
+    }
     data.usuario=req.usuario._id;
-    data.nombre=nombre;
 
     const producto= await Producto.findByIdAndUpdate(id,data,{new:true});
 
